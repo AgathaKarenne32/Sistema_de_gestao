@@ -1,0 +1,509 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// TABELA DE ENDEREÇOS
+model Endereco {
+  id String @id @default(uuid())
+  cep String?
+  logradouro String
+  numero String
+  complemento String?
+  bairro String
+  cidade String
+  uf String
+  pais String
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  @@map("enderecos")
+
+  usuarios Usuario[]
+}
+
+// TABELA DE USUÁRIOS
+model Usuario {
+  id String @id @default(uuid())
+  cpf String
+  nome String
+  nascimento DateTime
+  sexo String
+  email String
+  foto String?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  endereco Endereco @relation(fields: [endereco_id], references: [id])
+
+  @@map("usuarios")
+
+  endereco_id String
+
+  colaborador Colaborador[]
+  cliente Cliente[]
+  representante Representante[]
+}
+
+// TABELA DE COLABORADORES
+model Colaborador {
+  id String @id @default(uuid())
+  situacao Boolean
+  cargo String
+  celular String
+  telefone String
+  rg String
+  orgao_emissor String
+  carteira_trabalho String
+  serie String
+  pis String
+  titulo_eleitor String
+  zona_eleitoral String
+  secao_eleitoral String
+  salario_base Float
+  complemento_salario Int? // comissao em %
+  bonificacao Float? @default(0) // campo para armazenar a bonificação adicional comissão ou quebra de caixa
+  quebra_caixa Float? @default(0)
+  total_vendas_mes Float? @default(0) //Acumular o valor de ventas do mes
+  saldo_salario Float?
+  data_admissao DateTime? @default(now())
+  data_demisao DateTime?
+  senha String
+  obs String
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+  order Order[]
+  caixa Caixa []
+  quebraCaixa QuebraCaixa[]
+  holerite Holerite[]
+
+  @@map("colaboradores")
+
+  usuario_id String
+  colaborador_id String?
+}
+
+// TABELA DE CLIENTES
+model Cliente {
+  id String @id @default(uuid())
+  rg String?
+  orgao_emissor String?
+  celular String
+  telefone String?
+  telefone_referencia1 String
+  nome_referencia1 String
+  telefone_referencia2 String
+  nome_referencia2 String
+  telefone_referencia3 String
+  nome_referencia3 String
+  profissao String?
+  empresa String?
+  renda_fixa String?
+  complemento_renda String?
+  score String
+  limite_credito Float @default(0.0)
+  situacao Boolean?
+  obs String?
+  ultima_compra DateTime?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+  
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+  order Order[]
+  crediario Crediario[]
+
+  @@map("clientes")
+
+  usuario_id String
+}
+
+// TABELA DE REPRESENTANTES
+model Representante {
+  id String @id @default(uuid())
+  empresa String
+  celular String
+  telefone String
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+  status Boolean? @default(true)
+  obs String?
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+
+  @@map("representantes")
+  usuario_id String
+  fabrica Fabrica[]
+  produto Produto[]
+}
+
+// TABELA DE FABRICA
+model Fabrica {
+  id String @id @default(uuid())
+  empresa String
+  cnpj String
+  ie String
+  contato String
+  razaosocial String
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  representante Representante @relation(fields: [representante_id], references: [id])
+
+  @@map("fabricas")
+
+  representante_id String
+  produto Produto[]
+}
+
+// TABELA DE SECAO
+model Secao {
+  id String @id @default(uuid())
+  nome_secao String
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  @@map("secoes")
+
+  produtos Produto[]
+}
+
+// TABELA DE CATEGORIA
+model Categoria {
+  id String @id @default(uuid())
+  nome_categoria String
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  @@map("categorias")
+
+  produtos Produto[]
+}
+
+// TABELA DE PRODUTO
+model Produto {
+  id String @id @default(uuid())
+  nome_produto String
+  marca String
+  material String
+  foto String?
+  descricao String
+  custo Float
+  porcentagem_venda Int
+  preco_venda Float
+  margem_lucro Float
+  desconto_atual Int  // em %
+  desconto_maximo Int // em %
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  secao Secao @relation(fields: [secao_id], references: [id])
+  categoria Categoria @relation(fields: [categoria_id], references: [id])
+  fabrica Fabrica @relation(fields: [fabrica_id], references: [id])
+  representante Representante @relation(fields: [representante_id], references: [id])
+
+  produto_cor ProdutoCor[]
+  
+  //items Item[]
+
+  @@map("produtos")
+
+  secao_id String
+  categoria_id String
+  fabrica_id String
+  representante_id String
+}
+
+// TABELA DE TAMANHO PRODUTO
+model ProdutoTamanhoEstoque {
+  id String @id @default(uuid())
+  tamanho String
+  estoque Int
+
+  produtoCor ProdutoCor @relation(fields: [produtoCor_id], references: [id])
+
+  produtoCor_id String
+
+  //items Item[]
+
+  @@map("produto_tamanhos_estoque")
+}
+
+// TABELA DE COR DE PRODUTO
+model ProdutoCor {
+  id String @id @default(uuid())
+  cor String
+
+  produto Produto @relation(fields: [produto_id], references: [id])
+  produto_tamanhos_estoque ProdutoTamanhoEstoque[]
+  //items Item[]
+
+  @@map("produto_cor")
+
+  produto_id String
+}
+
+// TABELA DE ORDER
+model Order{
+  id String @id @default(uuid())
+  status Boolean @default(false) //ESTÁ ABERTO
+  draft Boolean @default(true) // É UM RASCUNHO
+  valor_total Float @default(0)
+  desconto Int @default(0)
+  valor_pagar Float @default(0)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  colaborado Colaborador @relation(fields: [colaborador_id], references: [id])
+  cliente Cliente @relation(fields: [cliente_id], references: [id])
+  caixa Caixa @relation(fields: [caixa_id], references: [id])
+
+  @@map("orders")
+  items Item[]
+  crediario Crediario[]
+
+  cliente_id String
+  colaborador_id String
+  caixa_id String
+}
+
+// TABELA DE ITEM
+model Item{
+  id String @id @default(uuid())
+  qtd Int
+  preco Float
+  preco_unit Float?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  order Order @relation(fields: [order_id], references: [id])
+  //produto Produto @relation(fields: [produto_id], references: [id])
+  
+  //tamanho ProdutoTamanhoEstoque @relation(fields: [tamanho_id], references: [id])
+  //cor ProdutoCor @relation(fields: [cor_id], references: [id])
+
+  @@map("items")
+  order_id String
+  produto_id String
+  produto_name String?
+  cor_id String
+  color_name String?
+  tamanho_id String
+  size_name String?
+}
+
+// TABELA DE CAIXA
+model Caixa{
+  id String @id @default(uuid())
+  data_abertura DateTime @default(now())
+  data_fechamento DateTime?
+  status Boolean @default(true)
+  valor_inicial Float @default(0)
+  valor_final Float? 
+  saldo Float @default(0)
+  obs String?
+
+  colaborador Colaborador @relation(fields: [colaborador_id], references: [id])
+
+  order Order[]
+  registrocaixa RegistroCaixa[]
+  retiradacaixa RetiradaCaixa[]
+  entradacaixa EntradaCaixa[]
+  entradacartao EntradaCartao[]
+  quebraCaixa QuebraCaixa[]
+  crediario Crediario[]
+
+  @@map("caixas")
+
+  colaborador_id String
+}
+
+// TABELA DE REGISTRO DE CAIXA
+model RegistroCaixa{
+  id String @id @default(uuid())
+  order_id String
+  data DateTime @default(now())
+  valor_recebido Float
+  troco Float
+  forma_pagamento String
+  plataforma_pagamento String? // credito, debito ou pix
+  obs String?
+  status Boolean // finalizado = true ou cancelado false
+
+  caixa Caixa @relation(fields: [caixa_id], references: [id])
+  entradacartao EntradaCartao? @relation(fields: [entradacartao_id], references: [id])
+  crediario Crediario? @relation(fields: [crediario_id], references: [id])
+
+  @@map("registrocaixas")
+
+  caixa_id String
+  entradacartao_id String?
+  crediario_id String?
+}
+
+// TABELA DE RETIRADA DE CAIXA
+model RetiradaCaixa{
+  id String @id @default(uuid())
+  colaborador_id String
+  data DateTime @default(now())
+  valor_retirado Float
+  motivo String?
+  obs String?
+
+  caixa Caixa @relation(fields: [caixa_id], references: [id])
+
+  @@map("retiradacaixas")
+
+  caixa_id String
+}
+
+// TABELA DE RNTRADA DE CAIXA
+model EntradaCaixa {
+  id String @id @default(uuid())
+  colaborador_id String
+  data DateTime @default(now())
+  valor_entrada Float
+  motivo String?
+  obs String
+  
+  caixa Caixa @relation(fields: [caixa_id], references: [id])
+
+  @@map("entradas_caixa")
+
+  caixa_id String
+}
+
+// TABELA DE ENTRADA DE CARTAO
+model EntradaCartao {
+  id String @id @default(uuid())
+  status Boolean @default(true)
+  colaborador_id String
+  data DateTime @default(now())
+  valor_entrada Float
+  motivo String?
+  obs String?
+  cliente_paga_juros Boolean @default(true) // Indica se o cliente paga os juros da máquina
+
+  caixa Caixa @relation(fields: [caixa_id], references: [id])
+  registroCaixa RegistroCaixa[]
+
+  @@map("entradas_cartao")
+
+  caixa_id String
+}
+
+// TABELA DE QUEBRA DE CAIXA
+model QuebraCaixa {
+  id String @id @default(uuid())
+  data DateTime @default(now())
+  valor Float  //valor que tem em caixa
+  diferenca Float?
+  status Boolean @default(true)
+  motivo String
+  motivo_reversao String?
+  obs String?
+
+  caixa Caixa @relation(fields: [caixa_id], references: [id])
+  colaborador Colaborador @relation(fields: [colaborador_id], references: [id])
+
+  @@map("quebras_caixa")
+
+  caixa_id String
+  colaborador_id String
+}
+
+// TABELA DE HOLERITE
+model Holerite {
+  id        String      @id @default(uuid())
+  situacao Boolean
+  colaborador_nome String
+  cpf String
+  email String?
+  celular String?
+  mes        DateTime
+  salario    Float
+  descontos  Float
+  bonus      Float
+  quebra_caixa Float?
+  liquido    Float
+  created_at DateTime    @default(now())
+  updated_at DateTime    @default(now())
+
+  colaborador Colaborador @relation(fields: [colaboradorId], references: [id])
+
+  @@map("holerite")
+
+  colaboradorId String
+}
+
+// TABELA DE CREDIARIO
+model Crediario {
+  id String        @id @default(uuid())
+  valorTotal Float //Valor total a pagar
+  quantidadeParcelas Int //QTD de parcelas
+  valorParcela Float
+  dataVencimento DateTime[]
+  status String @default("ABERTO") // Pode ser um enum com valores como "pendente", "pago", "atrasado", etc.
+  taxas_juros Int? // Valor parcelado
+  prazos String?
+  obs String?
+  created_at DateTime    @default(now())
+  updated_at DateTime    @default(now())
+
+  cliente Cliente @relation(fields: [cliente_id], references: [id])
+  order Order @relation(fields: [order_id], references: [id])
+  caixa Caixa @relation(fields: [caixa_id], references: [id])
+
+  parcelasCrediario ParcelaCrediario[]
+  registroCaixa RegistroCaixa[]
+
+  @@map("crediarios")
+
+  cliente_id String
+  order_id String
+  caixa_id String
+}
+
+// TABELA DE PARCELA DE CREDIARIO
+model ParcelaCrediario {
+  id String @id @default(uuid())
+  status Boolean @default(true)
+  numeroParcela Int  //Número da parcela.
+  valorParcela  Float //Valor da parcela
+  dataVencimento DateTime //Data de vencimento da parcela.
+  dataPagamento DateTime? //Data em que a parcela foi efetivamente paga.
+  valorPago Float? //Valor pago na parcela
+  formaPagamento String? //Forma de pagamento utilizada para pagar a parcela
+  taxas_juros Int? //Taxa de juros por atrazar a parcela
+  obs String?
+  created_at DateTime    @default(now())
+  updated_at DateTime    @default(now())
+  
+  crediario Crediario @relation(fields: [crediario_id], references: [id])
+
+  @@map("parcelas_crediario")
+
+  crediario_id String
+}
+
+// TABELA DE CONTAS A PAGAR DA LOJA EX: AGUA E LUZ
+model ContaAPagar {
+  id        String   @id @default(uuid())
+  nome      String   // Nome da conta (exemplo: água, luz, internet, etc.)
+  valor     Float    // Valor a ser pago
+  dataVencimento DateTime // Data de vencimento da conta
+  categoria String   // Categoria da conta (exemplo: despesas fixas, despesasvariaveis, compras, etc.)
+  status    String   // Status da conta (exemplo: pendente, pago, atrasado)
+  observacao String? // Observações adicionais
+
+  @@map("contas_a_pagar")
+  
+}
