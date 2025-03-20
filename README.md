@@ -4,7 +4,7 @@
 O **Sistema de Gestão** é um software desenvolvido para facilitar o gerenciamento de lojas de roupas, permitindo o controle de estoque, vendas, clientes e fornecedores de forma eficiente e organizada.
 
 ## Tecnologias Utilizadas
-- **Linguagem:** Java
+- **Linguagem:** typescript
 - **Banco de Dados:** MySQL
 - **Frameworks:** Spring Boot
 - **Frontend:** React.js
